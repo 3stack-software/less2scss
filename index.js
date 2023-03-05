@@ -52,7 +52,7 @@ const less2scss = (src, dst, recursive, exclude) => {
 
                 let currLessFiles = ignore()
                     .add(excludedPaths).filter(
-                        glob.sync(`${beginPath}/${recursive ? '**/*' : '*'}.less`, {
+                        glob.globSync(`${beginPath}/${recursive ? '**/*' : '*'}.less`, {
                             mark: true,
                             onlyFiles: true
                         }).map(
@@ -188,11 +188,13 @@ const writeFile = (file, scssContent, destinationPath, relativePath) => {
         }
 
         outputFile = resolve(newPath, path.basename(file)).replace('.less', '.scss');
+        fs.writeFileSync(outputFile, scssContent);
     } else {
-        outputFile = file.replace('.less', '.scss');
+        outputFile = file;
+        // write to same file and rename to preserve git history
+        fs.writeFileSync(outputFile, scssContent);
+        fs.rename(outputFile, outputFile.replace('.less', '.scss'));
     }
-
-    fs.writeFileSync(outputFile, scssContent);
 
     console.log(`${colors.yellow('[INFO]')} Finished writing to ${outputFile}`);
 };
