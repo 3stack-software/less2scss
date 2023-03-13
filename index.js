@@ -160,7 +160,11 @@ const transformSync = (content, file) => {
         .replace(/&(&+)/g, function (match, p1) {
             return "&" + p1.replace(/&/g, "#{&}")
         })
-        .replace(/@import +\( *css *\) +url/g, '@import url');
+        .replace(/@import +\( *css *\) +url/g, '@import url')
+        .replace(/calc\(~'([a-zA-Z0-9%\-\s]*)'\)/g, "calc($1)");
+
+        // TODO `calc\((.*)\$([a-zA-Z\-]*\d*)` variables within "calc" need to be wrapped around #{}
+        // eg attachments.scss. Can be manual fix.
 
     // rewrite some built-in functions
     const mathBuiltInFunctions = ['pow', 'ceil', 'floor', 'round', 'min', 'max', 'abs', 'sqrt', 'sin', 'cos'];
