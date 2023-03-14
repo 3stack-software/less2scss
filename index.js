@@ -149,6 +149,7 @@ const transformSync = (content, file) => {
         .replace(/([\W])spin\(/g, '$1adjust-hue(')
         .replace(/(\W)fade\(([^)]+?)% *\)/g, '$1rgba($2%/100.0%)')
         .replace(/(\W)fade\(/g, '$1rgba(')
+        .replace(/fadein\(/g, 'rgba(')
         .replace(/~(\s*['"])/g, '$1')
         .replace(/(.[\w\-]+?)&/g, "$1 &")
         .replace(/#([\w\-]*)\s*\{([^\}]*@mixin[\s\S]*)\}/g, function (all, $1, $2) {
@@ -161,10 +162,9 @@ const transformSync = (content, file) => {
             return "&" + p1.replace(/&/g, "#{&}")
         })
         .replace(/@import +\( *css *\) +url/g, '@import url')
-        .replace(/calc\(~'([a-zA-Z0-9%\-\s]*)'\)/g, "calc($1)");
+        .replace(/calc\('([a-zA-Z0-9%\-\s]*)'\)/g, "calc($1)");
 
-        // TODO `calc\((.*)\$([a-zA-Z\-]*\d*)` variables within "calc" need to be wrapped around #{}
-        // eg attachments.scss. Can be manual fix.
+        // TODO `calc\((.*)\$([a-zA-Z\-]*\d*)` variables within "calc" need to be wrapped around #{}. eg attachments.scss. Can be manual fix.
 
     // rewrite some built-in functions
     const mathBuiltInFunctions = ['pow', 'ceil', 'floor', 'round', 'min', 'max', 'abs', 'sqrt', 'sin', 'cos'];
@@ -172,7 +172,7 @@ const transformSync = (content, file) => {
     if (regexMathBuiltIn.test(transformedContent)) {
         transformedContent = '@use "sass:math";\n' + replaceAll(transformedContent, regexMathBuiltIn, (match, p1, index, input) => {
             console.log(`${MESSAGE_PREFIX.WARNING} There is math built-in function "${colors.bold(p1)}" check if rewrite is correct.\nFile ${file || '""' }}:${input.substring(0, index).split('\n').length + 1}`)
-            return `math.${match}`;
+            return match;
         });
     }
 
@@ -192,13 +192,11 @@ const writeFile = (file, scssContent, destinationPath, relativePath) => {
         }
 
         outputFile = resolve(newPath, path.basename(file)).replace('.less', '.scss');
-        fs.writeFileSync(outputFile, scssContent);
     } else {
         outputFile = file;
-        // write to same file and rename to preserve git history
-        fs.writeFileSync(outputFile, scssContent);
-        fs.rename(outputFile, outputFile.replace('.less', '.scss'));
     }
+
+    fs.writeFileSync(outputFile, scssContent);
 
     console.log(`${colors.yellow('[INFO]')} Finished writing to ${outputFile}`);
 };
